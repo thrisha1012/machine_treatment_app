@@ -62,7 +62,7 @@ const App = () => {
             console.log('Saved:', data);
             alert('Treatment saved successfully!');
             fetchTreatments(machineType); // Refresh treatments after successful save
-            setViewMode(''); // Reset to main view after saving
+            setTreatment(''); // Clear treatment input field
         } catch (error) {
             console.error('Error saving treatment:', error);
             alert('Failed to save treatment.');
@@ -136,11 +136,11 @@ const App = () => {
                         <button className="btn btn-primary mr-2" onClick={handleSave}>
                             Save
                         </button>
-                        <button className="btn btn-secondary mr-2" onClick={() => setViewMode('')}>
-                            Back
-                        </button>
-                        <button className="btn btn-secondary" onClick={handleCancel}>
+                        <button className="btn btn-secondary mr-2" onClick={handleCancel}>
                             Cancel
+                        </button>
+                        <button className="btn btn-secondary" onClick={() => setViewMode('')}>
+                            Back
                         </button>
                     </div>
                 </div>
