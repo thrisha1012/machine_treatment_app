@@ -1,75 +1,94 @@
+// server.js
+
 import express from 'express';
-import { MongoClient } from 'mongodb';
-import cors from 'cors';
+import bodyParser from 'body-parser';
+import { MongoClient, ObjectId } from 'mongodb'; // Import ObjectId for querying by _id
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 const app = express();
 const port = 5000;
 
-// Middleware setup
-app.use(cors());
-app.use(express.json());
-
-// MongoDB connection string
-const uri = 'mongodb+srv://sudhubalu04:XjoJOCPTdGCg7q8N@cluster0.zmvn1bl.mongodb.net/?retryWrites=true&w=majority';
+// MongoDB URI
+const uri = 'mongodb://localhost:27017';
 const client = new MongoClient(uri);
 
-client.connect(err => {
-  if (err) {
-    console.error('Failed to connect to MongoDB', err);
-    process.exit(1);
-  }
+// Database and Collection
+const dbName = 'machines';
 
-  console.log('Connected to MongoDB');
-  const db = client.db('machineDB');
-  const treatmentsCollection = db.collection('treatments');
+// __dirname and __filename replacement for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-  // Endpoint to add a treatment
-  app.post('/api/treatments', async (req, res) => {
-    const treatment = req.body;
-    if (!treatment.machineType || !treatment.treatment) {
-      return res.status(400).json({ error: 'Machine type and treatment are required' });
-    }
+async function startServer() {
     try {
-      const result = await treatmentsCollection.insertOne(treatment);
-      res.status(201).json(result);
+        // Connect to MongoDB
+        await client.connect();
+        const db = client.db(dbName);
+        console.log(`Connected to MongoDB database: ${dbName}`);
+
+        // Middleware
+        app.use(bodyParser.urlencoded({ extended: true }));
+        app.use(bodyParser.json()); // JSON body parser
+        app.use(express.static(path.join(__dirname, 'frontend/build'))); // Serve React build files
+
+        // API Route to fetch all treatments
+        app.get('/api/treatments', async (req, res) => {
+            try {
+                const treatments = await db.collection('treatments').find({}).toArray();
+                res.json(treatments);
+            } catch (err) {
+                console.error('Error fetching treatments:', err);
+                res.status(500).json({ error: 'Failed to fetch treatments' });
+            }
+        });
+
+        // API Route to fetch treatments by machineType
+        app.get('/api/treatments/:machineType', async (req, res) => {
+            const { machineType } = req.params;
+
+            try {
+                const treatments = await db.collection('treatments').find({ machineType }).toArray();
+                res.json(treatments);
+            } catch (err) {
+                console.error(`Error fetching treatments for machineType ${machineType}:`, err);
+                res.status(500).json({ error: `Failed to fetch treatments for machineType ${machineType}` });
+            }
+        });
+
+        // API Route for handling machine treatment details
+        app.post('/api/treatments', async (req, res) => {
+            const { machineType, treatment } = req.body;
+
+            try {
+                // Assuming 'treatments' is your collection in MongoDB
+                const result = await db.collection('treatments').insertOne({ machineType, treatment });
+
+                if (result.ops && result.ops.length > 0) {
+                    console.log('Treatment saved to MongoDB:', result.ops[0]);
+                    res.status(201).json(result.ops[0]); // Return the inserted document
+                } else {
+                    throw new Error('Failed to save treatment.'); // Handle case where result.ops[0] is undefined
+                }
+            } catch (err) {
+                console.error('Error saving treatment:', err);
+                res.status(500).json({ error: 'Failed to save treatment' });
+            }
+        });
+
+        // Serve React app for all other routes
+        app.get('*', (req, res) => {
+            res.sendFile(path.join(__dirname, 'frontend/build', 'index.html'));
+        });
+
+        // Start the server
+        app.listen(port, () => {
+            console.log(`Server is running on http://localhost:${port}`);
+        });
     } catch (err) {
-      console.error('Error inserting treatment', err);
-      res.status(500).json({ error: 'An error occurred while inserting treatment' });
+        console.error('Failed to connect to MongoDB', err);
+        process.exit(1);
     }
-  });
+}
 
-  // Endpoint to get all treatments
-  app.get('/api/treatments', async (req, res) => {
-    try {
-      const treatments = await treatmentsCollection.find().toArray();
-      res.status(200).json(treatments);
-    } catch (err) {
-      console.error('Error fetching treatments', err);
-      res.status(500).json({ error: 'An error occurred while fetching treatments' });
-    }
-  });
-
-  // Endpoint to get treatments by machine type
-  app.get('/api/treatments/:machineType', async (req, res) => {
-    const { machineType } = req.params;
-    try {
-      const treatments = await treatmentsCollection.find({ machineType }).toArray();
-      res.status(200).json(treatments);
-    } catch (err) {
-      console.error(`Error fetching treatments for machine type ${machineType}`, err);
-      res.status(500).json({ error: `An error occurred while fetching treatments for machine type ${machineType}` });
-    }
-  });
-
-  // Root endpoint to confirm API is running
-  app.get('/', (req, res) => {
-    res.send('Backend server is running. API endpoints are available at /api/treatments');
-  });
-
-  // Start the server
-  app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
-  });
- });
-
-
+startServer();
