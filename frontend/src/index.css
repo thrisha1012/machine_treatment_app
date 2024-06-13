@@ -1,13 +1,102 @@
+/* src/index.css */
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  padding: 0;
+  display: flex;
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    min-height: 100vh; 
+  background: url("https://png.pngtree.com/thumb_back/fw800/background/20230525/pngtree-stethoscope-sitting-on-black-background-image_2701639.jpg") no-repeat center center fixed;
+  background-size: cover;
+  height: 100vh; /* Ensure full viewport height */
+  font-family: Arial, sans-serif; /* Optional: Set a default font */
+  color: white; /* Set text color to white */
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+.container {
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background color for the container */
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+  margin-top: 20px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+}
+
+.btn-primary {
+  background-color: #007bff; /* Blue color for primary button */
+  color: white; /* Text color white */
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3; /* Darker shade of blue on hover */
+}
+
+.btn-success {
+  background-color: #28a745; /* Green color for success button */
+  color: white; /* Text color white */
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+.btn-success:hover {
+  background-color: #218838; /* Darker shade of green on hover */
+}
+
+.btn-secondary {
+  background-color: #6c757d; /* Gray color for secondary button */
+  color: white; /* Text color white */
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268; /* Darker shade of gray on hover */
+}
+
+.button-group {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.button-group button {
+  margin: 0 5px; /* Adjust as needed */
+  border-radius: 5px;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.button-group button:hover {
+  background-color: #6c757d;
+  color: white;
+}
+.table-centered {
+  margin-left: auto;
+  margin-right: auto;
+  width: 80%; /* Adjust width as needed */
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.table-responsive {
+  display: flex;
+  justify-content: center;
 }

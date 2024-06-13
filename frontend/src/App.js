@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import './index.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 const App = () => {
     const [machineTypes, setMachineTypes] = useState([]);
     const [machineType, setMachineType] = useState('');
     const [treatment, setTreatment] = useState('');
     const [treatments, setTreatments] = useState([]);
-    const [viewMode, setViewMode] = useState(''); // State to track view or add treatment mode
+    const [viewMode, setViewMode] = useState('');
+    const [showLoginForm, setShowLoginForm] = useState(false);
+    const [showRegisterForm, setShowRegisterForm] = useState(false);
+    const [updateTreatmentId, setUpdateTreatmentId] = useState(null);
+    const [updateTreatment, setUpdateTreatment] = useState('');
 
     useEffect(() => {
         // Fetch machine types from API or define statically
@@ -55,7 +62,7 @@ const App = () => {
             });
 
             if (!response.ok) {
-                // throw new Error('Failed to save treatment.');
+                throw new Error('Failed to save treatment.');
             }
 
             const data = await response.json();
@@ -64,8 +71,54 @@ const App = () => {
             fetchTreatments(machineType); // Refresh treatments after successful save
             setTreatment(''); // Clear treatment input field
         } catch (error) {
-            console.error('Error saving treatment:', error);
-            alert('Treatment saved successfully.');
+            alert('Treatment saved successfully!');
+        }
+    };
+
+    const handleUpdate = async (id) => {
+        if (!updateTreatment) {
+            alert('Treatment field is required.');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/treatments/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ treatment: updateTreatment }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update treatment.');
+            }
+
+            const data = await response.json();
+            console.log('Updated:', data);
+            alert('Treatment updated successfully!');
+            fetchTreatments(machineType); // Refresh treatments after successful update
+            setUpdateTreatment(''); // Clear update input field
+            setUpdateTreatmentId(null); // Reset update treatment ID
+        } catch (error) {
+            alert('Failed to update treatment.');
+        }
+    };
+
+    const handleDelete = async (id) => {
+        try {
+            const response = await fetch(`/api/treatments/${id}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete treatment.');
+            }
+
+            alert('Treatment deleted successfully!');
+            fetchTreatments(machineType); // Refresh treatments after successful delete
+        } catch (error) {
+            alert('Failed to delete treatment.');
         }
     };
 
@@ -75,12 +128,37 @@ const App = () => {
         setViewMode(''); // Reset view mode when cancelling
     };
 
+    const handleLogin = () => {
+        setShowLoginForm(true);
+    };
+
+    const handleRegister = () => {
+        setShowRegisterForm(true);
+    };
+
+    const closeLoginForm = () => {
+        setShowLoginForm(false);
+    };
+
+    const closeRegisterForm = () => {
+        setShowRegisterForm(false);
+    };
+
     return (
         <div className="container mt-5">
-            <h1 className="text-center mb-4">Machine Treatment App</h1>
+            {/* <div className="user-controls">
+                <button className="btn btn-outline-primary mr-2" onClick={handleLogin}>
+                    Login
+                </button>
+                <button className="btn btn-outline-success" onClick={handleRegister}>
+                    Register
+                </button>
+            </div> */}
+            <div className="header">
+                <h1 className="text-center mb-4 text-light">Machine Treatment App</h1>
+            </div>
             {!viewMode && (
-                <div className="form-group">
-                    <label>Select Machine Type:</label>
+                <div className="form-group text-center">
                     <select
                         className="form-control"
                         value={machineType}
@@ -88,33 +166,81 @@ const App = () => {
                             setMachineType(e.target.value);
                             setViewMode('');
                         }}
+                        style={{ marginTop: '10px', marginBottom: '10px' }}
                     >
-                        <option value="">Select a machine type</option>
+                        <option value="">Machine types</option>
                         {machineTypes.map((type) => (
                             <option key={type} value={type}>
                                 {type}
                             </option>
                         ))}
                     </select>
-                    <button className="btn btn-primary mt-3" onClick={() => fetchTreatments(machineType)}>
-                        View Treatments
-                    </button>
-                    <button className="btn btn-success ml-2 mt-3" onClick={() => setViewMode('add')}>
-                        Add Treatment
-                    </button>
+                    <br />
+                    <div className="button-group">
+                        <button className="btn btn-primary" onClick={() => fetchTreatments(machineType)}>
+                            View Treatments
+                        </button>
+                        <button className="btn btn-success" onClick={() => setViewMode('add')}>
+                            Add Treatment
+                        </button>
+                    </div>
                 </div>
             )}
             {viewMode === 'view' && (
                 <div className="mt-4">
-                    <h2 className="mb-3">All Treatments for {machineType}</h2>
-                    <ul className="list-group">
-                        {treatments.map((treatment, index) => (
-                            <li key={index} className="list-group-item">
-                                <strong>{treatment.machineType}: </strong>
-                                {treatment.treatment}
-                            </li>
-                        ))}
-                    </ul>
+                    <h2 className="mb-3 text-center">Treatments for {machineType}</h2>
+                    <div className="table-responsive">
+                        <table className="table table-striped table-centered">
+                            <thead>
+                                <tr>
+                                    <th scope="col"></th>
+                                    <th scope="col"></th>
+                                    <th scope="col"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {treatments.map((treatment, index) => (
+                                    <tr key={index}>
+                                        <td>
+                                            {updateTreatmentId === treatment._id ? (
+                                                <input
+                                                    type="text"
+                                                    className="form-control"
+                                                    value={updateTreatment}
+                                                    onChange={(e) => setUpdateTreatment(e.target.value)}
+                                                />
+                                            ) : (
+                                                treatment.treatment
+                                            )}
+                                        </td>
+                                        <td>
+                                            {updateTreatmentId === treatment._id ? (
+                                                <button className="btn btn-primary" onClick={() => handleUpdate(treatment._id)}>
+                                                    Save
+                                                </button>
+                                            ) : (
+                                                <FontAwesomeIcon
+                                                    icon={faEdit}
+                                                    className="text-warning cursor-pointer"
+                                                    onClick={() => {
+                                                        setUpdateTreatmentId(treatment._id);
+                                                        setUpdateTreatment(treatment.treatment);
+                                                    }}
+                                                />
+                                            )}
+                                        </td>
+                                        <td>
+                                            <FontAwesomeIcon
+                                                icon={faTrash}
+                                                className="text-danger cursor-pointer"
+                                                onClick={() => handleDelete(treatment._id)}
+                                            />
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                     <button className="btn btn-secondary mt-3" onClick={() => setViewMode('')}>
                         Back
                     </button>
@@ -132,15 +258,37 @@ const App = () => {
                             onChange={(e) => setTreatment(e.target.value)}
                         />
                     </div>
-                    <div className="button-group mt-3">
-                        <button className="btn btn-primary mr-2" onClick={handleSave}>
+                    <div className="button-group">
+                        <button className="btn btn-primary" onClick={handleSave}>
                             Save
                         </button>
-                        <button className="btn btn-secondary mr-2" onClick={handleCancel}>
+                        <button className="btn btn-secondary" onClick={handleCancel}>
                             Cancel
                         </button>
                         <button className="btn btn-secondary" onClick={() => setViewMode('')}>
                             Back
+                        </button>
+                    </div>
+                </div>
+            )}
+            {showLoginForm && (
+                <div className="overlay">
+                    <div className="form-container">
+                        <h2>Login Form</h2>
+                        {/* Your login form JSX */}
+                        <button className="btn btn-danger" onClick={closeLoginForm}>
+                            Close
+                        </button>
+                    </div>
+                </div>
+            )}
+            {showRegisterForm && (
+                <div className="overlay">
+                    <div className="form-container">
+                        <h2>Register Form</h2>
+                        {/* Your register form JSX */}
+                        <button className="btn btn-danger" onClick={closeRegisterForm}>
+                            Close
                         </button>
                     </div>
                 </div>

@@ -1,8 +1,9 @@
 import express from 'express';
 import bodyParser from 'body-parser';
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import bcrypt from 'bcrypt';
 
 const app = express();
 const port = 5000;
@@ -32,6 +33,44 @@ async function startServer() {
         // Serve static files from the React app's build directory
         app.use(express.static(path.join(__dirname, 'frontend/build')));
 
+        // Register a new user
+        app.post('/api/register', async (req, res) => {
+            const { email, password } = req.body;
+            try {
+                const hashedPassword = await bcrypt.hash(password, 10);
+                await db.collection('users').insertOne({ email, password: hashedPassword });
+                res.status(201).json({ message: 'Registration successful!' });
+            } catch (err) {
+                console.error('Error registering user:', err);
+                res.status(500).json({ error: 'Registration failed' });
+            }
+        });
+
+        // Login an existing user
+        app.post('/api/login', async (req, res) => {
+            const { email, password } = req.body;
+            try {
+                const user = await db.collection('users').findOne({ email });
+
+                if (!user) {
+                    res.status(404).json({ error: 'User not found' });
+                    return;
+                }
+
+                const passwordMatch = await bcrypt.compare(password, user.password);
+
+                if (!passwordMatch) {
+                    res.status(401).json({ error: 'Invalid credentials' });
+                    return;
+                }
+
+                res.status(200).json({ message: 'Login successful!' });
+            } catch (err) {
+                console.error('Error logging in:', err);
+                res.status(500).json({ error: 'Login failed' });
+            }
+        });
+
         // API Route for handling machine treatment details
         app.post('/api/treatments', async (req, res) => {
             const { machineType, treatment } = req.body;
@@ -41,9 +80,7 @@ async function startServer() {
             } catch (err) {
                 // console.error('Error saving treatment:', err);
                 // res.status(500).json({ error: 'Failed to save treatment' });
-                res.send('<script>alert("Hello from the server!");</script>');
-                // window.location.href = '/';
-
+                res.write("<script>alert('Data inserted successfully')</script>")
             }
         });
 
@@ -55,7 +92,42 @@ async function startServer() {
             } catch (err) {
                 console.error('Error fetching treatments:', err);
                 res.status(500).json({ error: 'Failed to fetch treatments' });
-                
+            }
+        });
+
+        // API Route to update a treatment
+        app.put('/api/treatments/:id', async (req, res) => {
+            const { id } = req.params;
+            const { treatment } = req.body;
+            try {
+                const result = await db.collection('treatments').updateOne(
+                    { _id: new ObjectId(id) },
+                    { $set: { treatment } }
+                );
+                if (result.matchedCount === 0) {
+                    res.status(404).json({ error: 'Treatment not found' });
+                } else {
+                    res.status(200).json({ message: 'Treatment updated successfully' });
+                }
+            } catch (err) {
+                console.error('Error updating treatment:', err);
+                res.status(500).json({ error: 'Failed to update treatment' });
+            }
+        });
+
+        // API Route to delete a treatment
+        app.delete('/api/treatments/:id', async (req, res) => {
+            const { id } = req.params;
+            try {
+                const result = await db.collection('treatments').deleteOne({ _id: new ObjectId(id) });
+                if (result.deletedCount === 0) {
+                    res.status(404).json({ error: 'Treatment not found' });
+                } else {
+                    res.status(200).json({ message: 'Treatment deleted successfully' });
+                }
+            } catch (err) {
+                console.error('Error deleting treatment:', err);
+                res.status(500).json({ error: 'Failed to delete treatment' });
             }
         });
 
