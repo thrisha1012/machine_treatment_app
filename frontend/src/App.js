@@ -1,5 +1,3 @@
-// App.js
-
 import React, { useState, useEffect } from 'react';
 
 const App = () => {
@@ -7,16 +5,25 @@ const App = () => {
     const [machineType, setMachineType] = useState('');
     const [treatment, setTreatment] = useState('');
     const [treatments, setTreatments] = useState([]);
+    const [viewTreatmentsMode, setViewTreatmentsMode] = useState(false);
 
     useEffect(() => {
         // Fetch machine types from API or define statically
-        setMachineTypes(['MRI Machine (Magnetic Resonance Imaging)', 'CT Scanner (Computed Tomography)', 'Ultrasound Machine','X-Ray Machine','ECG Machine (Electrocardiogram)','Ventilator','Dialysis Machine','Infusion Pump','Anesthesia Machine','Defibrillator','Endoscope','Dialysis Machine','Patient Monitor']);
-
-        // Fetch treatments for default machine type on component mount
-        if (machineTypes.length > 0) {
-            fetchTreatments(machineTypes[0]); // Fetch treatments for the first machine type by default
-        }
-    }, []); // Empty dependency array ensures useEffect runs only on component mount
+        setMachineTypes([
+            'MRI Machine (Magnetic Resonance Imaging)',
+            'CT Scanner (Computed Tomography)',
+            'Ultrasound Machine',
+            'X-Ray Machine',
+            'ECG Machine (Electrocardiogram)',
+            'Ventilator',
+            'Dialysis Machine',
+            'Infusion Pump',
+            'Anesthesia Machine',
+            'Defibrillator',
+            'Endoscope',
+            'Patient Monitor',
+        ]);
+    }, []);
 
     const fetchTreatments = async (type) => {
         try {
@@ -26,6 +33,7 @@ const App = () => {
             }
             const data = await response.json();
             setTreatments(data);
+            setViewTreatmentsMode(true); // Switch to view treatments mode
         } catch (error) {
             console.error('Error fetching treatments:', error);
         }
@@ -67,48 +75,72 @@ const App = () => {
 
     return (
         <div className="App">
-            <h1>Machine Treatment Form</h1>
-            <div>
-                <label>
-                    Machine Type:
-                    <select value={machineType} onChange={(e) => {
+            <h1>Machine Treatment App</h1>
+            <div className="form-group">
+                <label>Select Machine Type:</label>
+                <select
+                    className="form-control"
+                    value={machineType}
+                    onChange={(e) => {
                         setMachineType(e.target.value);
-                        fetchTreatments(e.target.value); // Fetch treatments for selected machine type
-                    }}>
-                        <option value="">Select a machine type</option>
-                        {machineTypes.map((type) => (
-                            <option key={type} value={type}>
-                                {type}
-                            </option>
-                        ))}
-                    </select>
-                </label>
-            </div>
-            <div>
-                <label>
-                    Treatment:
-                    <input
-                        type="text"
-                        value={treatment}
-                        onChange={(e) => setTreatment(e.target.value)}
-                    />
-                </label>
-            </div>
-            <div>
-                <button onClick={handleSave}>Save</button>
-                <button onClick={handleCancel}>Cancel</button>
-            </div>
-            <div>
-                <h2>All Treatments for {machineType}</h2>
-                <ul>
-                    {treatments.map((treatment, index) => (
-                        <li key={index}>
-                            <strong>{treatment.machineType}: </strong>
-                            {treatment.treatment}
-                        </li>
+                        setViewTreatmentsMode(false); // Reset view treatments mode
+                    }}
+                >
+                    <option value="">Select a machine type</option>
+                    {machineTypes.map((type) => (
+                        <option key={type} value={type}>
+                            {type}
+                        </option>
                     ))}
-                </ul>
+                </select>
             </div>
+            {!viewTreatmentsMode && (
+                <div className="button-group">
+                    <button className="btn btn-primary" onClick={() => fetchTreatments(machineType)}>
+                        View Treatments
+                    </button>
+                    <button className="btn btn-success" onClick={() => setViewTreatmentsMode(true)}>
+                        Add Treatment
+                    </button>
+                </div>
+            )}
+            {viewTreatmentsMode && (
+                <div className="treatments">
+                    <h2>All Treatments for {machineType}</h2>
+                    <ul>
+                        {treatments.map((treatment, index) => (
+                            <li key={index}>
+                                <strong>{treatment.machineType}: </strong>
+                                {treatment.treatment}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+            {viewTreatmentsMode && (
+                <div className="add-treatment-form">
+                    <h2>Add Treatment</h2>
+                    <div>
+                        <label>
+                            Treatment:
+                            <input
+                                type="text"
+                                className="form-control"
+                                value={treatment}
+                                onChange={(e) => setTreatment(e.target.value)}
+                            />
+                        </label>
+                    </div>
+                    <div className="button-group">
+                        <button className="btn btn-primary" onClick={handleSave}>
+                            Save
+                        </button>
+                        <button className="btn btn-secondary" onClick={() => setViewTreatmentsMode(false)}>
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
