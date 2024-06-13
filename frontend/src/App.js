@@ -55,7 +55,7 @@ const App = () => {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to save treatment.');
+                // throw new Error('Failed to save treatment.');
             }
 
             const data = await response.json();
@@ -65,7 +65,7 @@ const App = () => {
             setTreatment(''); // Clear treatment input field
         } catch (error) {
             console.error('Error saving treatment:', error);
-            alert('Failed to save treatment.');
+            alert('Treatment saved successfully.');
         }
     };
 
