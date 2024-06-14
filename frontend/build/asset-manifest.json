@@ -1,15 +1,16 @@
 {
   "files": {
-    "main.css": "/static/css/main.5e87f587.css",
-    "main.js": "/static/js/main.74a9b040.js",
+    "main.css": "/static/css/main.e7307163.css",
+    "main.js": "/static/js/main.ae2d7596.js",
     "static/js/453.8ab44547.chunk.js": "/static/js/453.8ab44547.chunk.js",
+    "static/media/stethoscope-840125_1280.jpg": "/static/media/stethoscope-840125_1280.211b2fa54a5c3e067fe1.jpg",
     "index.html": "/index.html",
-    "main.5e87f587.css.map": "/static/css/main.5e87f587.css.map",
-    "main.74a9b040.js.map": "/static/js/main.74a9b040.js.map",
+    "main.e7307163.css.map": "/static/css/main.e7307163.css.map",
+    "main.ae2d7596.js.map": "/static/js/main.ae2d7596.js.map",
     "453.8ab44547.chunk.js.map": "/static/js/453.8ab44547.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.5e87f587.css",
-    "static/js/main.74a9b040.js"
+    "static/css/main.e7307163.css",
+    "static/js/main.ae2d7596.js"
   ]
 }

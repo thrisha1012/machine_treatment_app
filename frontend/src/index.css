@@ -6,7 +6,7 @@ body {
     justify-content: center; /* Center horizontally */
     align-items: center; /* Center vertically */
     min-height: 100vh; 
-  background: url("https://png.pngtree.com/thumb_back/fw800/background/20230525/pngtree-stethoscope-sitting-on-black-background-image_2701639.jpg") no-repeat center center fixed;
+  background: url("stethoscope-840125_1280.jpg") no-repeat center center fixed;
   background-size: cover;
   height: 100vh; /* Ensure full viewport height */
   font-family: Arial, sans-serif; /* Optional: Set a default font */

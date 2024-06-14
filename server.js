@@ -64,7 +64,7 @@ async function startServer() {
                     return;
                 }
 
-                res.status(200).json({ message: 'Login successful!' });
+                res.status(200).json({ message: 'Login successful!', user: { email: user.email } });
             } catch (err) {
                 console.error('Error logging in:', err);
                 res.status(500).json({ error: 'Login failed' });

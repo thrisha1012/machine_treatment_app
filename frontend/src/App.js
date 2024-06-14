@@ -9,13 +9,14 @@ const App = () => {
     const [treatment, setTreatment] = useState('');
     const [treatments, setTreatments] = useState([]);
     const [viewMode, setViewMode] = useState('');
-    const [showLoginForm, setShowLoginForm] = useState(false);
-    const [showRegisterForm, setShowRegisterForm] = useState(false);
     const [updateTreatmentId, setUpdateTreatmentId] = useState(null);
     const [updateTreatment, setUpdateTreatment] = useState('');
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [user, setUser] = useState(null);
+    const [showRegister, setShowRegister] = useState(false);
+    const [showPopup, setShowPopup] = useState(false);
 
     useEffect(() => {
-        // Fetch machine types from API or define statically
         setMachineTypes([
             'MRI Machine (Magnetic Resonance Imaging)',
             'CT Scanner (Computed Tomography)',
@@ -40,7 +41,7 @@ const App = () => {
             }
             const data = await response.json();
             setTreatments(data);
-            setViewMode('view'); // Switch to view treatments mode
+            setViewMode('view'); 
         } catch (error) {
             console.error('Error fetching treatments:', error);
         }
@@ -52,11 +53,17 @@ const App = () => {
             return;
         }
 
+        if (!isAuthenticated) {
+            setViewMode('login');
+            return;
+        }
+
         try {
             const response = await fetch('/api/treatments', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${user.token}`
                 },
                 body: JSON.stringify({ machineType, treatment }),
             });
@@ -65,13 +72,18 @@ const App = () => {
                 throw new Error('Failed to save treatment.');
             }
 
-            const data = await response.json();
-            console.log('Saved:', data);
-            alert('Treatment saved successfully!');
-            fetchTreatments(machineType); // Refresh treatments after successful save
-            setTreatment(''); // Clear treatment input field
+            setShowPopup(true);
+
+            setTimeout(() => {
+                setShowPopup(false);
+            }, 3000);
+
+            setTreatment('');
+
+            setViewMode(''); // Go back to the initial view mode
+
         } catch (error) {
-            alert('Treatment saved successfully!');
+            alert('Failed to save treatment.');
         }
     };
 
@@ -86,20 +98,21 @@ const App = () => {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${user.token}`
                 },
                 body: JSON.stringify({ treatment: updateTreatment }),
             });
 
             if (!response.ok) {
-                throw new Error('Failed to update treatment.');
+                throw new Error('Failed to update treatment.Check whether you have sign in.');
             }
 
             const data = await response.json();
             console.log('Updated:', data);
             alert('Treatment updated successfully!');
-            fetchTreatments(machineType); // Refresh treatments after successful update
-            setUpdateTreatment(''); // Clear update input field
-            setUpdateTreatmentId(null); // Reset update treatment ID
+            fetchTreatments(machineType);
+            setUpdateTreatment('');
+            setUpdateTreatmentId(null);
         } catch (error) {
             alert('Failed to update treatment.');
         }
@@ -109,14 +122,17 @@ const App = () => {
         try {
             const response = await fetch(`/api/treatments/${id}`, {
                 method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${user.token}`
+                },
             });
 
             if (!response.ok) {
-                throw new Error('Failed to delete treatment.');
+                throw new Error('Failed to delete treatment.Check whether you have sign in.');
             }
 
             alert('Treatment deleted successfully!');
-            fetchTreatments(machineType); // Refresh treatments after successful delete
+            fetchTreatments(machineType);
         } catch (error) {
             alert('Failed to delete treatment.');
         }
@@ -125,39 +141,61 @@ const App = () => {
     const handleCancel = () => {
         setMachineType('');
         setTreatment('');
-        setViewMode(''); // Reset view mode when cancelling
+        setViewMode(''); 
     };
 
-    const handleLogin = () => {
-        setShowLoginForm(true);
+    const login = async (email, password) => {
+        try {
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to login.');
+            }
+
+            const data = await response.json();
+            setUser(data.user);
+            setIsAuthenticated(true);
+            setViewMode('add');
+        } catch (error) {
+            alert('Failed to login.');
+        }
     };
 
-    const handleRegister = () => {
-        setShowRegisterForm(true);
-    };
+    const register = async (email, password) => {
+        try {
+            const response = await fetch('/api/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            });
 
-    const closeLoginForm = () => {
-        setShowLoginForm(false);
-    };
+            if (!response.ok) {
+                throw new Error('Failed to register.');
+            }
 
-    const closeRegisterForm = () => {
-        setShowRegisterForm(false);
+            const data = await response.json();
+            alert('Registration successful! Please login.');
+            setShowRegister(false);
+            setViewMode('login');
+        } catch (error) {
+            alert('Failed to register.');
+        }
     };
 
     return (
         <div className="container mt-5">
-            {/* <div className="user-controls">
-                <button className="btn btn-outline-primary mr-2" onClick={handleLogin}>
-                    Login
-                </button>
-                <button className="btn btn-outline-success" onClick={handleRegister}>
-                    Register
-                </button>
-            </div> */}
             <div className="header">
                 <h1 className="text-center mb-4 text-light">Machine Treatment App</h1>
             </div>
-            {!viewMode && (
+            {viewMode === '' && (
                 <div className="form-group text-center">
                     <select
                         className="form-control"
@@ -177,10 +215,24 @@ const App = () => {
                     </select>
                     <br />
                     <div className="button-group">
-                        <button className="btn btn-primary" onClick={() => fetchTreatments(machineType)}>
+                        <button 
+                            className="btn btn-primary" 
+                            onClick={() => fetchTreatments(machineType)}
+                            disabled={!machineType} // Disable button if no machine type selected
+                        >
                             View Treatments
                         </button>
-                        <button className="btn btn-success" onClick={() => setViewMode('add')}>
+                        <button 
+                            className="btn btn-success" 
+                            onClick={() => {
+                                if (isAuthenticated) {
+                                    setViewMode('add');
+                                } else {
+                                    setViewMode('login');
+                                }
+                            }}
+                            disabled={!machineType} // Disable button if no machine type selected
+                        >
                             Add Treatment
                         </button>
                     </div>
@@ -262,32 +314,82 @@ const App = () => {
                         <button className="btn btn-primary" onClick={handleSave}>
                             Save
                         </button>
-                        <button className="btn btn-secondary" onClick={handleCancel}>
-                            Cancel
-                        </button>
+                
                         <button className="btn btn-secondary" onClick={() => setViewMode('')}>
                             Back
                         </button>
                     </div>
                 </div>
             )}
-            {showLoginForm && (
+            {viewMode === 'login' && !showRegister && (
                 <div className="overlay">
                     <div className="form-container">
-                        <h2>Login Form</h2>
-                        {/* Your login form JSX */}
-                        <button className="btn btn-danger" onClick={closeLoginForm}>
+                        <h2>Login</h2>
+                        <form onSubmit={(e) => {
+                            e.preventDefault();
+                            const email = e.target.email.value;
+                            const password = e.target.password.value;
+                            login(email, password);
+                        }}>
+                            <div className="form-group">
+                                <label>Email:</label>
+                                <input type="email" name="email" className="form-control" required />
+                            </div>
+                            <div className="form-group">
+    <label>Password:</label>
+    <input
+        type="password"
+        name="password"
+        className="form-control"
+        style={{ marginBottom: '10px' }} // Adding space below the input
+        required
+    />
+</div>
+<div className="text-center" style={{ marginTop: '10px' }}> {/* Adding space above the button */}
+    <button type="submit" className="btn btn-primary">Login</button>
+</div>
+
+                        </form>
+                        <hr />
+                        <div className="text-center">
+                            <p>If not registered, please <a href="#" onClick={() => setShowRegister(true)}>register</a>.</p>
+                        </div>
+                        <button className="btn btn-danger mt-3" onClick={handleCancel}>
                             Close
                         </button>
                     </div>
                 </div>
             )}
-            {showRegisterForm && (
+            {showRegister && (
                 <div className="overlay">
                     <div className="form-container">
-                        <h2>Register Form</h2>
-                        {/* Your register form JSX */}
-                        <button className="btn btn-danger" onClick={closeRegisterForm}>
+                        <h2>Register</h2>
+                        <form onSubmit={(e) => {
+                            e.preventDefault();
+                            const email = e.target.email.value;
+                            const password = e.target.password.value;
+                            register(email, password);
+                        }}>
+                            <div className="form-group">
+                                <label>Email:</label>
+                                <input type="email" name="email" className="form-control" required />
+                            </div>
+                            <div className="form-group">
+    <label>Password:</label>
+    <input
+        type="password"
+        name="password"
+        className="form-control"
+        style={{ marginBottom: '10px' }} // Adding space below the input
+        required
+    />
+</div>
+<div style={{ textAlign: 'center' }}>
+    <button type="submit" className="btn btn-secondary">Register</button>
+</div>
+
+                        </form>
+                        <button className="btn btn-danger mt-3" onClick={() => setShowRegister(false)}>
                             Close
                         </button>
                     </div>
