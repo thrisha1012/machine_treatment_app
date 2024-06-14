@@ -1,0 +1,1 @@
+machine_treatment_type_app
